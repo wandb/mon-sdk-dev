@@ -57,7 +57,7 @@ def save_partition(run, name, art_name, columns, partition_name, partition_rows)
     run.log({name: part_table})
     print("DONE SAVING PARTITION", partition_name)
 
-def append_table_thread(name, columns, row_queue):
+def stream_table_thread(name, columns, row_queue):
     run = wandb.run or wandb.init()
     art_name = 'run-%s-%s' % (run.id, name)
 
@@ -91,12 +91,12 @@ def append_table_thread(name, columns, row_queue):
         save_partition(run, name, art_name, columns, partition_name, partition_rows)
 
 
-class AppendTable:
+class StreamTable:
     """Table matching wandb.Table API with streaming/append support"""
     def __init__(self, name, columns):
         self.columns = columns
         self.row_queue = queue.Queue()
-        self.flush_thread = threading.Thread(target=append_table_thread, args=(name, columns, self.row_queue))
+        self.flush_thread = threading.Thread(target=stream_table_thread, args=(name, columns, self.row_queue))
         self.flush_thread.start()
         atexit.register(self.join)
     
