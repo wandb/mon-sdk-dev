@@ -20,6 +20,7 @@ with open("requirements.txt") as requirements_file:
 
 setup(
     name="mon-sdk-dev",
+    packages=["mon_sdk_dev"],
     version="0.0.1.dev1",
     description="W&B dev package for monitoring sdk.",
     author="Weights & Biases",
