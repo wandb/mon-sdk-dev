@@ -11,7 +11,7 @@ import os
 from wandb import data_types
 
 
-MAX_PARTITION_SIZE = 10
+MAX_PARTITION_SIZE = 100
 
 def random_string(n):
     return "".join(random.choices(string.ascii_lowercase, k=n))
@@ -19,15 +19,14 @@ def random_string(n):
 
 def next_flush_timeout(cur_time, start_time, cur_flush_timeout):
     if cur_time - start_time < 5 * 60:
-        # First 5 minutes, flush every 10 seconds
-        max_flush_timeout = 10
-    elif cur_time - start_time < 30 * 60:
-        # First 30 minutes, flush every 60 seconds
+        # First 5 minutes, flush every second
+        max_flush_timeout = 1
+    elif cur_time - start_time < 60 * 60:
+        # First hour, flush every 60 seconds
         max_flush_timeout = 60
     else:
         # Flush every 10 minutes
         max_flush_timeout = 600
-    return 2
     return min(cur_flush_timeout * 2, max_flush_timeout)
 
 
@@ -41,7 +40,6 @@ def get_cur_files(run, name):
 
 
 def save_partition(run, name, art_name, columns, partition_name, partition_rows):
-    print("SAVING PARTITION", partition_name, len(partition_rows))
     new_art = wandb.Artifact(art_name, type='table')
     new_art.add_dir(art_name + '/partitions', name='partitions')
     table = wandb.Table(columns=columns)
@@ -51,11 +49,8 @@ def save_partition(run, name, art_name, columns, partition_name, partition_rows)
     part_table = data_types.PartitionedTable('partitions')
     new_art.add(part_table, name='partitions')
     new_art.save()
-    print("WAITING FOR SAVE")
     new_art.wait()
-    print("CALLING LOG")
     run.log({name: part_table})
-    print("DONE SAVING PARTITION", partition_name)
 
 def stream_table_thread(name, columns, row_queue):
     run = wandb.run or wandb.init()
@@ -76,7 +71,6 @@ def stream_table_thread(name, columns, row_queue):
             continue
         if row is None:
             break
-        print("GOT NEW ROW")
         partition_rows.append(row)
         timestamp = time.time()
         if timestamp - last_flush_time > flush_timeout:
@@ -101,7 +95,6 @@ class StreamTable:
         atexit.register(self.join)
     
     def join(self):
-        print("JOINING APPEND TABLE")
         self.row_queue.put(None)
         self.flush_thread.join()
 
