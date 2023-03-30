@@ -1,3 +1,9 @@
+from setuptools import setup
+import pkg_resources
+
+with open("requirements.txt") as requirements_file:
+    requirements = pkg_resources.parse_requirements(requirements_file) 
+
 setup(
     name="mon-sdk-deve",
     version="0.0.1.dev1",
@@ -13,5 +19,4 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    extras_require={"ecosystem": requirements_ecosystem},
 )
